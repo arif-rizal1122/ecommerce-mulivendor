@@ -3,7 +3,7 @@ package com.ecommerce.ecommerce_multivendor.controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.ecommerce.ecommerce_multivendor.response.ApiResponse;
+import com.ecommerce.ecommerce_multivendor.dto.response.ApiResponse;
 
 @RestController
 public class HomeController {

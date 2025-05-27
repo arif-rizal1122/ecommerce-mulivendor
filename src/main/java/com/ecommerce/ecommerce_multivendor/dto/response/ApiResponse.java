@@ -1,4 +1,4 @@
-package com.ecommerce.ecommerce_multivendor.response;
+package com.ecommerce.ecommerce_multivendor.dto.response;
 
 import lombok.Data;
 

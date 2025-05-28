@@ -3,6 +3,7 @@ package com.ecommerce.ecommerce_multivendor.service.auth;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -22,10 +23,12 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class CustomUserServiceImpl implements UserDetailsService {
 
+    @Autowired
     private UserRepository userRepository;
 
     private static final String SELLER_PREFIX = "seller_";
 
+     @Autowired
     private SellerRepository sellerRepository;
 
     @Override
@@ -50,8 +53,9 @@ public class CustomUserServiceImpl implements UserDetailsService {
     private UserDetails buildUserDetails(String email, String password, USER_ROLE role) {
         if (role == null) role = USER_ROLE.ROLE_CUSTOMER;
 
-        List<GrantedAuthority> authorities = new ArrayList<>();
-        authorities.add(new SimpleGrantedAuthority("ROLE_" + role));
-        return new org.springframework.security.core.userdetails.User(email, password, authorities);
+        List<GrantedAuthority> authorityList = new ArrayList<>();
+        authorityList.add(new SimpleGrantedAuthority(role.toString()));
+        
+        return new org.springframework.security.core.userdetails.User(email, password,  authorityList);
     }
 }

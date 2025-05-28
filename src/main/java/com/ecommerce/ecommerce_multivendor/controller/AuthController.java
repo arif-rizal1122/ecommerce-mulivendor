@@ -3,13 +3,17 @@ package com.ecommerce.ecommerce_multivendor.controller;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ecommerce.ecommerce_multivendor.domain.USER_ROLE;
+import com.ecommerce.ecommerce_multivendor.dto.request.LoginUserRequest;
+import com.ecommerce.ecommerce_multivendor.dto.request.OtpRequest;
 import com.ecommerce.ecommerce_multivendor.dto.request.SignUpRequest;
+import com.ecommerce.ecommerce_multivendor.dto.response.ApiResponse;
 import com.ecommerce.ecommerce_multivendor.dto.response.AuthResponse;
 import com.ecommerce.ecommerce_multivendor.service.auth.AuthService;
 
@@ -40,4 +44,36 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response); // Status 500 Internal Server Error
         }
     }
+
+    @PostMapping("/send/login-signup-otp")
+    public ResponseEntity<ApiResponse> sendOtpHandler(@Valid @RequestBody OtpRequest request) {
+        ApiResponse response = new ApiResponse();
+        try {
+            authService.sendLoginOtp(request);
+            response.setMessage("otp send successfully!");
+            return ResponseEntity.status(HttpStatus.CREATED).body(response); 
+        } 
+        catch (Exception e) {
+            response.setMessage("otp sending failed due to an unexpected error: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response); 
+        }
+    }
+
+    @PostMapping("/signin")
+    public ResponseEntity<AuthResponse> loginHandler(@Valid @RequestBody LoginUserRequest request) {
+        AuthResponse response = new AuthResponse();
+        try {
+            AuthResponse authResponse = authService.signin(request);
+            return ResponseEntity.ok(authResponse);
+        } 
+        catch (BadCredentialsException e) {
+            response.setMessage("Login failed: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+        }
+        catch (Exception e) {
+            response.setMessage("Login failed due to an unexpected error: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
 }

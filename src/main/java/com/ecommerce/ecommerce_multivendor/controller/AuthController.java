@@ -49,7 +49,7 @@ public class AuthController {
     public ResponseEntity<ApiResponse> sendOtpHandler(@Valid @RequestBody OtpRequest request) {
         ApiResponse response = new ApiResponse();
         try {
-            authService.sendLoginOtp(request);
+            authService.sendLoginOtp(request.getEmail(), request.getRole());
             response.setMessage("otp send successfully!");
             return ResponseEntity.status(HttpStatus.CREATED).body(response); 
         } 
@@ -59,11 +59,11 @@ public class AuthController {
         }
     }
 
-    @PostMapping("/signin")
+    @PostMapping("/signing")
     public ResponseEntity<AuthResponse> loginHandler(@Valid @RequestBody LoginUserRequest request) {
         AuthResponse response = new AuthResponse();
         try {
-            AuthResponse authResponse = authService.signin(request);
+            AuthResponse authResponse = authService.signing(request);
             return ResponseEntity.ok(authResponse);
         } 
         catch (BadCredentialsException e) {

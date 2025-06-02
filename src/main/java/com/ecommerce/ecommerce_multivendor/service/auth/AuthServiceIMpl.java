@@ -12,7 +12,6 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,13 +19,14 @@ import org.springframework.transaction.annotation.Transactional;
 import com.ecommerce.ecommerce_multivendor.config.JwtProvider;
 import com.ecommerce.ecommerce_multivendor.domain.USER_ROLE;
 import com.ecommerce.ecommerce_multivendor.dto.request.LoginUserRequest;
-import com.ecommerce.ecommerce_multivendor.dto.request.OtpRequest;
 import com.ecommerce.ecommerce_multivendor.dto.request.SignUpRequest;
 import com.ecommerce.ecommerce_multivendor.dto.response.AuthResponse;
 import com.ecommerce.ecommerce_multivendor.model.Cart;
+import com.ecommerce.ecommerce_multivendor.model.Seller;
 import com.ecommerce.ecommerce_multivendor.model.User;
 import com.ecommerce.ecommerce_multivendor.model.VerificationCode;
 import com.ecommerce.ecommerce_multivendor.repository.CartRepository;
+import com.ecommerce.ecommerce_multivendor.repository.SellerRepository;
 import com.ecommerce.ecommerce_multivendor.repository.UserRepository;
 import com.ecommerce.ecommerce_multivendor.repository.VerificationCodeRepository;
 import com.ecommerce.ecommerce_multivendor.utils.OtpUtil;
@@ -56,40 +56,53 @@ public class AuthServiceIMpl implements AuthService{
     private EmailService emailService;
 
     @Autowired
+    private SellerRepository sellerRepository;
+
+    @Autowired
     private CustomUserServiceImpl customUserServiceImpl;
 
 
 
     @Override
-    public void sendLoginOtp(OtpRequest request) throws Exception {
-        String SIGNING_PREFIX = "signin_";
-        String email = request.getEmail(); // Ambil email dari request
+    public void sendLoginOtp(String email, USER_ROLE role) throws Exception {
+        String SIGNING_PREFIX = "signing_";
         
-        // PERBAIKI: Logic untuk memproses email dengan prefix
+        // Hapus prefix jika ada
         if (email.startsWith(SIGNING_PREFIX)) {
-            email = email.substring(SIGNING_PREFIX.length()); // Assign ke variable email
+            email = email.substring(SIGNING_PREFIX.length());
+        }
+        
+        // Validasi menggunakan email yang sudah diproses
+        if (role.equals(USER_ROLE.ROLE_SELLER)) {
+            Seller seller = sellerRepository.findByEmail(email);
+            if (seller == null) {
+                throw new Exception("Seller not found with email: " + email);
+            }
+        } else {
             User user = userRepository.findByEmail(email);
             if (user == null) {
-                throw new Exception("user not exists with provided email");
+                throw new Exception("User not found with email: " + email);
             }
         }
         
-        // Gunakan email yang sudah diproses
-        VerificationCode isExists = verificationCodeRepository.findByEmail(email);
-        if (isExists != null) {
-            verificationCodeRepository.delete(isExists);
+        // Hapus verification code yang sudah ada
+        VerificationCode existingCode = verificationCodeRepository.findByEmail(email);
+        if (existingCode != null) {
+            verificationCodeRepository.delete(existingCode);
         }
         
+        // Buat verification code baru
         String otp = OtpUtil.generateOtp();
         VerificationCode verificationCode = new VerificationCode();
         verificationCode.setOtp(otp);
-        verificationCode.setEmail(email); // Gunakan email yang sudah diproses
+        verificationCode.setEmail(email);
         verificationCodeRepository.save(verificationCode);
 
-        String subject = "arif rizal login/signup";
-        String text = "your login / signup OTP is: " + otp; // Perbaiki text untuk include OTP
+        String subject = "Login/Signup OTP Verification";
+        String text = "Your login/signup OTP is: " + otp;
+        String frontend_url = "http://localhost:8081/verify-seller";
 
-        emailService.sendVerificationOtpEmail(email, otp, subject, text);
+        emailService.sendVerificationOtpEmail(email, otp, subject, text, frontend_url);
     }
 
 
@@ -131,7 +144,7 @@ public class AuthServiceIMpl implements AuthService{
 
 
     @Override
-    public AuthResponse signin(LoginUserRequest request) throws Exception {
+    public AuthResponse signing(LoginUserRequest request) throws Exception {
         String username = request.getEmail();
         String otp = request.getOtp();
 
@@ -162,9 +175,12 @@ public class AuthServiceIMpl implements AuthService{
     }
 
     private Authentication authentication(String username, String otp) throws Exception {
-        try {
+           
             UserDetails userDetails = customUserServiceImpl.loadUserByUsername(username);
-            
+            String SELLER_PREFIX="seller_";
+            if (username.startsWith(SELLER_PREFIX)) {
+                username = username.substring(SELLER_PREFIX.length());
+            }
             if (userDetails == null) {
                 throw new BadCredentialsException("Invalid username or password");
             }
@@ -172,7 +188,7 @@ public class AuthServiceIMpl implements AuthService{
             // Cek verifikasi OTP
             VerificationCode verificationCode = verificationCodeRepository.findByEmail(username);
             if (verificationCode == null) {
-                throw new BadCredentialsException("No verification code found for this email");
+                throw new Exception("No verification code found for this email");
             }
             
             if (!verificationCode.getOtp().equals(otp)) {
@@ -181,9 +197,6 @@ public class AuthServiceIMpl implements AuthService{
 
             return new UsernamePasswordAuthenticationToken(userDetails, null, 
                                                         userDetails.getAuthorities());
-        } catch (UsernameNotFoundException e) {
-            throw new BadCredentialsException("User not found with email: " + username);
         }
-    }
     
 }   

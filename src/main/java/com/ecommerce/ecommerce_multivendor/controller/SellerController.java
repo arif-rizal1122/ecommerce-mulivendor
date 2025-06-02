@@ -20,6 +20,7 @@ import com.ecommerce.ecommerce_multivendor.config.JwtProvider;
 import com.ecommerce.ecommerce_multivendor.domain.AccountStatus;
 import com.ecommerce.ecommerce_multivendor.dto.request.LoginUserRequest;
 import com.ecommerce.ecommerce_multivendor.dto.response.AuthResponse;
+import com.ecommerce.ecommerce_multivendor.exception.SellerException;
 import com.ecommerce.ecommerce_multivendor.model.Seller;
 import com.ecommerce.ecommerce_multivendor.model.VerificationCode;
 import com.ecommerce.ecommerce_multivendor.repository.VerificationCodeRepository;
@@ -97,7 +98,7 @@ public class SellerController {
 
 
     @GetMapping("/{id}")
-    public ResponseEntity<Seller> getSellerById(@PathVariable Long id) throws Exception{
+    public ResponseEntity<Seller> getSellerById(@PathVariable Long id) throws SellerException{
         Seller seller = sellerService.getSellerById(id);
         return new ResponseEntity<>(seller, HttpStatus.OK);
     }

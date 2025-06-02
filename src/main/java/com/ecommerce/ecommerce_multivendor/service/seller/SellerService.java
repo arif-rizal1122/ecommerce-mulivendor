@@ -3,6 +3,7 @@ package com.ecommerce.ecommerce_multivendor.service.seller;
 import java.util.List;
 
 import com.ecommerce.ecommerce_multivendor.domain.AccountStatus;
+import com.ecommerce.ecommerce_multivendor.exception.SellerException;
 import com.ecommerce.ecommerce_multivendor.model.Seller;
 
 public interface SellerService {
@@ -11,7 +12,7 @@ public interface SellerService {
 
     Seller createSeller(Seller seller) throws Exception;
 
-    Seller getSellerById(Long id) throws Exception;
+    Seller getSellerById(Long id) throws SellerException;
 
     Seller getSellerByEmail(String email) throws Exception;
 

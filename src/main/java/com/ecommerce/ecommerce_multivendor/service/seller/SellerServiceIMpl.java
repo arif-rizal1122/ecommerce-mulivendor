@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import com.ecommerce.ecommerce_multivendor.config.JwtProvider;
 import com.ecommerce.ecommerce_multivendor.domain.AccountStatus;
 import com.ecommerce.ecommerce_multivendor.domain.USER_ROLE;
+import com.ecommerce.ecommerce_multivendor.exception.SellerException;
 import com.ecommerce.ecommerce_multivendor.model.Address;
 import com.ecommerce.ecommerce_multivendor.model.Seller;
 import com.ecommerce.ecommerce_multivendor.repository.AddressRepository;
@@ -68,9 +69,9 @@ public class SellerServiceIMpl implements SellerService{
     }
 
     @Override
-    public Seller getSellerById(Long id) throws Exception {
+    public Seller getSellerById(Long id) throws SellerException {
         return sellerRepository.findById(id)
-           .orElseThrow(() -> new Exception("seller not found with id .." + id));
+           .orElseThrow(() -> new SellerException("seller not found with id .." + id));
     }
 
 

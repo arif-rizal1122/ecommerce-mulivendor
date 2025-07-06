@@ -40,6 +40,8 @@ public class Product {
 
     private String color;
 
+    private String description;
+
     @ElementCollection
     private List<String> images = new ArrayList<>();
 
